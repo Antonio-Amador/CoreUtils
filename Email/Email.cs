@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Email
 {
-    public class Class1
+    public class Email
     {
     }
 }
