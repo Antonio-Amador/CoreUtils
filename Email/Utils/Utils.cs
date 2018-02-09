@@ -1,13 +1,11 @@
-﻿using CLFCore.AuxModels;
+﻿using Email.AuxModels;
 using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.DirectoryServices;
 using System.IO;
-using System.Net;
 using System.Net.Mail;
 
-namespace CLFCore.Utilis
+namespace Email.Utilis
 {
     public class Utils
     {
@@ -229,11 +227,11 @@ namespace CLFCore.Utilis
                         message.Attachments.Add(attach);
                     }
                     client.Send(message);
-                    CLFCore.Logs.LogsInfoRepository.Info("To: " + m.emailAddressFrom + " Subject: " + m.emailSubject + " Message: " + m.emailBody, "Util");
+                    Email.Logs.LogsInfoRepository.Info("To: " + m.emailAddressFrom + " Subject: " + m.emailSubject + " Message: " + m.emailBody, "Util");
                 }
                 catch (Exception e)
                 {
-                    CLFCore.Logs.LogsInfoRepository.Error(e, "Util");
+                    Email.Logs.LogsInfoRepository.Error(e, "Util");
                     throw new Exception("3 - " + e.InnerException);
                 }
             }
@@ -258,7 +256,7 @@ namespace CLFCore.Utilis
             }
             catch (Exception e)
             {
-                CLFCore.Logs.LogsInfoRepository.Error(e, "Util");
+                Email.Logs.LogsInfoRepository.Error(e, "Util");
             }
             return buff;
         }
@@ -282,131 +280,5 @@ namespace CLFCore.Utilis
 
 #endregion
 
-#region Acessos
-
-        public string GetGroups(string UserName, string LDAPQueryString)
-        {
-
-            //1.	GDL_AQD_PCL - Portal do Cliente – Funcionalidades para gestão do portal:
-            //2.	GDL_AQD_GED - Gestão Documental – Substituto do Documentum Webtop:
-            //3.	GDL_AQD_COF - Configuração – Funcionalidades para configuração da plataforma (gestão de acessos, etc.):
-            //4.    GDL_AQD_ADM - Administração – Os utilizadores pertencentes a este grupo terão acesso a todos os menus (este grupo não será gerido pela plataforma
-
-            DirectoryEntry de = new DirectoryEntry();
-            List<string> userInfo = new List<string>();
-
-            string groupNames = "";
-
-            de.Path = LDAPQueryString;
-
-            de.AuthenticationType = AuthenticationTypes.Secure;
-
-            DirectorySearcher deSearch = new DirectorySearcher();
-
-            deSearch.SearchRoot = de;
-            deSearch.Filter = "(&(objectClass=user) (samAccountName=" + UserName + "))";
-            //deSearch.Filter = "(&(objectClass=user) (displayName=" + UserName + "))";
-
-            SearchResult dresult = deSearch.FindOne();
-
-            if (dresult != null)
-            {
-                DirectoryEntry deUser = new DirectoryEntry(dresult.Path);
-
-                string dn = null;
-                int equalsIndex = 0, commaIndex = 0;
-                var memberOf = deUser.Properties["memberOf"];
-
-                System.DirectoryServices.PropertyCollection pc = deUser.Properties;
-                foreach (PropertyValueCollection col in pc)
-                {
-                    userInfo.Add(col.PropertyName + " : " + col.Value);
-
-                }
-
-                foreach (var result2 in memberOf)
-                {
-
-                    dn = result2.ToString();
-                    equalsIndex = dn.IndexOf("=", 1);
-                    commaIndex = dn.IndexOf(",", 1);
-                    if (-1 == equalsIndex)
-                    {
-                        return null;
-                    }
-
-                    if (dn.Substring((equalsIndex + 1), (commaIndex - equalsIndex) - 1) != null && dn.Substring((equalsIndex + 1), (commaIndex - equalsIndex) - 1).StartsWith("GDL_AQD_"))
-                    {
-                        groupNames = groupNames + dn.Substring((equalsIndex + 1), (commaIndex - equalsIndex) - 1) + "_";
-                    }
-                }
-
-                deUser.Close();
-            }
-            return groupNames;
-        }
-
-        public List<string> GetArrayGroups(string UserName, string LDAPQueryString)
-        {
-
-            //1.	GDL_AQD_PCL - Portal do Cliente – Funcionalidades para gestão do portal:
-            //2.	GDL_AQD_GED - Gestão Documental – Substituto do Documentum Webtop:
-            //3.	GDL_AQD_COF - Configuração – Funcionalidades para configuração da plataforma (gestão de acessos, etc.):
-            //4.    GDL_AQD_ADM - Administração – Os utilizadores pertencentes a este grupo terão acesso a todos os menus (este grupo não será gerido pela plataforma
-
-            DirectoryEntry de = new DirectoryEntry();
-            List<string> userInfo = new List<string>();
-
-            List<string> groupNames = new List<string>();
-
-            de.Path = LDAPQueryString;
-
-            de.AuthenticationType = AuthenticationTypes.Secure;
-
-            DirectorySearcher deSearch = new DirectorySearcher();
-
-            deSearch.SearchRoot = de;
-            //deSearch.Filter = "(&(objectClass=user) (samAccountName=" + UserLogin + "))";
-            deSearch.Filter = "(&(objectClass=user) (displayName=" + UserName + "))";
-
-            SearchResult dresult = deSearch.FindOne();
-
-            if (dresult != null)
-            {
-                DirectoryEntry deUser = new DirectoryEntry(dresult.Path);
-
-                string dn = null;
-                int equalsIndex = 0, commaIndex = 0;
-                var memberOf = deUser.Properties["memberOf"];
-
-                System.DirectoryServices.PropertyCollection pc = deUser.Properties;
-                foreach (PropertyValueCollection col in pc)
-                {
-                    userInfo.Add(col.PropertyName + " : " + col.Value);
-
-                }
-
-                foreach (var result2 in memberOf)
-                {
-
-                    dn = result2.ToString();
-                    equalsIndex = dn.IndexOf("=", 1);
-                    commaIndex = dn.IndexOf(",", 1);
-                    if (-1 == equalsIndex)
-                    {
-                        return null;
-                    }
-
-                    if (dn.Substring((equalsIndex + 1), (commaIndex - equalsIndex) - 1) != null && dn.Substring((equalsIndex + 1), (commaIndex - equalsIndex) - 1).StartsWith("GDL_AQD_"))
-                    {
-                        groupNames.Add(dn.Substring((equalsIndex + 1), (commaIndex - equalsIndex) - 1));
-                    }
-                }
-
-                deUser.Close();
-            }
-            return groupNames;
-        }
-#endregion
     }
 }
